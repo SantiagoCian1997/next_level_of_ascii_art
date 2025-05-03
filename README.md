@@ -2,8 +2,11 @@
 I know that the name sounds a bit ambitious. But, have you seen the results?
 
 ![Alt text](media_examples/readme_media/readme_example_0.jpg)
-![Alt text](media_examples/readme_media/readme_example_1.jpg)
+
 ![Alt text](media_examples/readme_media/readme_example_2.jpg)
+
+![Alt text](media_examples/readme_media/readme_example_1.jpg)
+
 ![Alt text](media_examples/readme_media/readme_example_3.jpg)
 
 
