@@ -133,3 +133,5 @@ last_run_dump*
 # devs_tools
 *dev_tools*
 dev_tools/
+*local_devs*
+local_devs/

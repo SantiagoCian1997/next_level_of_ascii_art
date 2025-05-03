@@ -96,7 +96,7 @@ class Create:
             print(f"\033[0m--- final time : {time.time() - start_time} ---")
 
     def dump_to_file(self,filename):
-        with open(filename, "w") as file:
+        with open(filename, "w", encoding='utf-8') as file:
             file.write(self.str_out)
 
 

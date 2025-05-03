@@ -1,11 +1,11 @@
 # next_level_of_ascii_art
 I know that the name sounds a bit ambitious. But, have you seen the results?
 
-example image 0
+![Alt text](media_examples/readme_media/readme_example_0.jpg)
+![Alt text](media_examples/readme_media/readme_example_1.jpg)
+![Alt text](media_examples/readme_media/readme_example_2.jpg)
+![Alt text](media_examples/readme_media/readme_example_3.jpg)
 
-example image 1
-
-example image 2
 
 ## So, what is new here? 
 In this case, the ASCII output is generated using standard terminal colors, and it infers the lowest-error combination of character elements — including background color, foreground color, and the actual printable character — for each section of the image.
@@ -22,7 +22,9 @@ python3 setup.py
 # then, on Linux use:
 source .venv/bin/activate
 # Or, on Widnows use:
-.venv\Scripts\activate.bat
+.venv\Scripts\activate.bat 
+.venv\Scripts\Activate.ps1
+# Or, install the reqs in requirements.txt
 ```
 
 ### Create your ASCII art

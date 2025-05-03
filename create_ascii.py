@@ -27,4 +27,5 @@ with open(args.calibration, 'rb') as file:
 
 cr = Create(image_input, grid_size, args.quality, calibration, args.verbose)
 cr.start_infer()
-cr.dump_to_file(f"last_run_dump_{args.picture_file.split("/")[-1].split(".")[0]}.txt")
+_name = args.picture_file.split("/")[-1].split(".")[0]
+cr.dump_to_file(f"last_run_dump_{_name}.txt")
