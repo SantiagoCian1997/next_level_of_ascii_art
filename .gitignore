@@ -142,5 +142,6 @@ video_dev/
 *tmp_video*
 tmp_video/
 
-
-
+# C wrapper dev
+*c_lib_dev*
+c_lib_dev/

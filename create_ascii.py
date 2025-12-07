@@ -1,7 +1,6 @@
 #!.venv/bin/python
 import argparse
 import pprint
-from colorama import Fore,Back,Style
 from internal.create_cl import Create
 from PIL import Image,ImageDraw
 import os
@@ -19,6 +18,8 @@ parser.add_argument("-q",     "--quality",      choices=["fast", "medium", "slow
 parser.add_argument("-video", "--video",        action="store_true",help="Video processing")                     # flag
 parser.add_argument("-od",    "--output_dir",   help="Specify output directory", default=".")                                       # optional argument
 parser.add_argument("-quiet", "--quiet",        action="store_true",help="No printing process")                                       # flag
+parser.add_argument("-L",     "--low_libs",     action="store_true",help="Use C libs")                   # flag
+
 args = parser.parse_args()
 
 size_terminal = os.get_terminal_size()
@@ -32,7 +33,7 @@ with open(args.calibration, 'rb') as file:
 
 if not args.video:
     image_input = Image.open(args.picture_file)
-    cr = Create(image_input, grid_size, args.quality, calibration, args.verbose, args.quiet)
+    cr = Create(image_input, grid_size, args.quality, calibration, args.verbose, args.quiet, args.low_libs)
     cr.start_infer()
     _name = Path(args.picture_file).name.split(".")[0]
     dump_file = f"last_run_dump_{_name}.txt"

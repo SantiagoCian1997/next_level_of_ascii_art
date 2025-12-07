@@ -5,12 +5,11 @@ import random
 import time
 import numpy as np
 import sys
-
-#match_00 = match.Find_match(cal)
+import ctypes
 
 
 class Create:
-    def __init__(self, image, grid_size, quality_arg, calibration, verbose = True, quiet = False):
+    def __init__(self, image, grid_size, quality_arg, calibration, verbose = True, quiet = False, use_C_libs = False):
         self.image = image
         self.original_grid_size = grid_size
         self.quality_arg = quality_arg
@@ -18,6 +17,7 @@ class Create:
         self.grid_info = calibration["grid_info"]
         self.verbose = verbose
         self.quiet = quiet
+        self.use_C_libs = use_C_libs
 
         px_t_x = int(self.original_grid_size[0]*self.grid_info.char_size_X)
         px_t_y = int(self.original_grid_size[1]*self.grid_info.char_size_Y)
@@ -71,30 +71,107 @@ class Create:
             print(f"Multi core function come soon :) ")
             print()
 
-        matcher = Matcher(self.char_data)
-        matcher.verify_char_size(self.grid_info, self.sub_images[0])
         start_time = time.time()
         self.str_out = ""
-        cnt = 0
-        for i, sub_image in enumerate(self.sub_images):
-            cnt += 1
-            if self.quality_arg == "fast":
-                min_error_char = matcher.find_average_color(sub_image)
-            elif self.quality_arg == "medium":
-                if self.grid_info.char_size_X > 20:
-                    min_error_char = matcher.find_quar(sub_image)
-                else:
-                    min_error_char = matcher.find_half(sub_image)
-            else : #slow
-                min_error_char = matcher.find(sub_image)
+        if not self.use_C_libs:
+            matcher = Matcher(self.char_data)
+            matcher.verify_char_size(self.grid_info, self.sub_images[0])
+            cnt = 0
+            for i, sub_image in enumerate(self.sub_images):
+                cnt += 1
+                if self.quality_arg == "fast":
+                    min_error_char = matcher.find_average_color(sub_image)
+                elif self.quality_arg == "medium":
+                    if self.grid_info.char_size_X > 20:
+                        min_error_char = matcher.find_quar(sub_image)
+                    else:
+                        min_error_char = matcher.find_half(sub_image)
+                else : #slow
+                    min_error_char = matcher.find(sub_image)
 
-            if not self.quiet: print(min_error_char, end='', flush=True)
-            self.str_out += min_error_char
-            if cnt == self.grid_size[0]:
-                cnt = 0
-                if not self.quiet: print("\033[0m")
-                self.str_out += "\033[0m\n"
-                
+                if not self.quiet: print(min_error_char, end='', flush=True)
+                self.str_out += min_error_char
+                if cnt == self.grid_size[0]:
+                    cnt = 0
+                    if not self.quiet: print("\033[0m")
+                    self.str_out += "\033[0m\n"
+                    
+        else: # C libs 
+            # Load the shared library
+            c_matcher = ctypes.CDLL('./c_lib_dev/c_matcher.so')  # Use 'mylib.dll' on Windows
+            # Define argument types for safety
+            c_matcher.infer_and_match.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_int)]
+            c_matcher.infer_and_match.restype = None
+
+            
+
+
+            # Create a byte array in Python
+            ttt = [pixel for img in self.sub_images for col in np.array(img).astype(np.int16) for pixel in col]
+            #aux = 
+            #np.array(self.sub_images[1]).astype(np.int16)
+            # final_vector = [cell.info for column in main_matrix for cell in column]
+            # picture_grid_r = bytearray([np.array(img).astype(np.int16) for img in self.sub_images])
+            # picture_grid_g = bytearray([np.array(img).astype(np.int16) for img in self.sub_images])
+            # picture_grid_b = bytearray([np.array(img).astype(np.int16) for img in self.sub_images])
+
+            picture_grid_r = bytearray([pixel[0] for pixel in ttt])
+            picture_grid_g = bytearray([pixel[1] for pixel in ttt])
+            picture_grid_b = bytearray([pixel[2] for pixel in ttt])
+            
+            array_type_r = ctypes.c_uint8 * len(picture_grid_r)
+            array_type_g = ctypes.c_uint8 * len(picture_grid_g)
+            array_type_b = ctypes.c_uint8 * len(picture_grid_b)
+
+            c_array_r = array_type_r(*picture_grid_r)
+            c_array_g = array_type_g(*picture_grid_g)
+            c_array_b = array_type_b(*picture_grid_b)
+
+
+            print("deubug: ")
+            print(f"picture_grid_r[0:5] : {[str(d) for d in picture_grid_r[0:5]]}")
+            print(f"c_array_r[0:5]      : {[str(d) for d in c_array_r[0:5]]}")
+            # data = bytearray([0x01, 0x02, 0xFF, 0x10, 0x20])
+            # # Convert it to a ctypes array
+            # array_type = ctypes.c_uint8 * len(data)
+            # c_array = array_type(*data)
+            # # Call the function
+            #c_matcher.infer_and_match(c_array, len(data))
+             
+            ccc = [pixel for img in self.char_data for col in img.info_pixel_np for pixel in col]
+
+            char_grid_r = bytearray([pixel[0] for pixel in ccc])
+            char_grid_g = bytearray([pixel[1] for pixel in ccc])
+            char_grid_b = bytearray([pixel[2] for pixel in ccc])
+            
+            array_char_r = ctypes.c_uint8 * len(char_grid_r)
+            array_char_g = ctypes.c_uint8 * len(char_grid_g)
+            array_char_b = ctypes.c_uint8 * len(char_grid_b)
+
+            c_char_pixel_info_array_r = array_char_r(*char_grid_r)
+            c_char_pixel_info_array_g = array_char_g(*char_grid_g)
+            c_char_pixel_info_array_b = array_char_b(*char_grid_b)
+
+
+            array_return_char_index = ctypes.c_int * int(self.grid_size[0]*self.grid_size[1])  # Create a ctypes array type
+            return_char_index = array_return_char_index()                # Allocate the actual array
+            breakpoint()
+            c_matcher.infer_and_match(    
+                self.grid_info.char_size_X, # char_x,         # int
+                self.grid_info.char_size_Y, # char_y,         # int
+                int(self.grid_size[0]*self.grid_size[1]), # n_grid,         # int 
+                int(len(self.char_data)), # n_char_data,    # int 
+                c_array_r, # picture_grid_r, # uint8_t*  
+                c_array_g, # picture_grid_g, # uint8_t*  
+                c_array_b, # picture_grid_b, # uint8_t*  
+                c_char_pixel_info_array_r, # char_data_r,    # uint8_t*  
+                c_char_pixel_info_array_g, # char_data_g,    # uint8_t*  
+                c_char_pixel_info_array_b, # char_data_b,    # uint8_t*  
+                return_char_index # return_char_index,       #   int*
+            )
+            print(f"returned: {[str(d) for d in return_char_index]}")
+
+            
         if self.verbose:
             print(f"\033[0m--- final time : {time.time() - start_time} ---")
 
@@ -187,4 +264,3 @@ class Matcher:
                         min_error = final_error
             cont += 1
         return last_char_data
-    
