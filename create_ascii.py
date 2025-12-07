@@ -1,7 +1,6 @@
 #!.venv/bin/python
 import argparse
 import pprint
-from colorama import Fore,Back,Style
 from internal.create_cl import Create
 from PIL import Image,ImageDraw
 import os
@@ -13,6 +12,7 @@ parser.add_argument("-C", "--calibration",  help="calibration file", default="ca
 parser.add_argument("-c", "--columns",      help="Column output number")                                     # optional argument
 parser.add_argument("-r", "--rows",         help="Rows output number")                                       # optional argument
 parser.add_argument("-v", "--verbose",      action="store_true",help="Enable verbose mode")                  # flag
+parser.add_argument("-L", "--low_libs",     action="store_true",help="(debug) use C libs")                   # flag
 parser.add_argument("-q", "--quality",      choices=["fast", "medium", "slow"], help="Quality of the interfering", default="medium")
 args = parser.parse_args()
 
@@ -25,7 +25,7 @@ else :                           grid_size = [size_terminal.columns , size_termi
 with open(args.calibration, 'rb') as file:
     calibration = pickle.load(file)
 
-cr = Create(image_input, grid_size, args.quality, calibration, args.verbose)
+cr = Create(image_input, grid_size, args.quality, calibration, args.verbose, args.low_libs)
 cr.start_infer()
 _name = args.picture_file.split("/")[-1].split(".")[0]
 cr.dump_to_file(f"last_run_dump_{_name}.txt")

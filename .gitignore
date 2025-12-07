@@ -135,3 +135,5 @@ last_run_dump*
 dev_tools/
 *local_devs*
 local_devs/
+*c_lib_dev*
+c_lib_dev/
