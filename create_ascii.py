@@ -43,7 +43,7 @@ else :
     from internal.video2picture import create_subprocess
     from internal.video_player import play_video
     tmp_dir = "tmp_video"
-    output_dir = create_subprocess(args,tmp_dir,simultaneous_process=18)
+    output_dir = create_subprocess(args,tmp_dir,simultaneous_process=8)
 
     play_video(output_dir)
 
