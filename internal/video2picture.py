@@ -40,14 +40,15 @@ def _rmdir(directory):
         directory.rmdir()
 
 
-OUTPUT_VIDEO_DIR = "video_dumps"
+
 class CreateProcess():
-    def __init__(self, picture : str, args,started_bar,finished_bar):
+    def __init__(self, picture : str, args,output_dumps_path,started_bar,finished_bar):
         self.picture = picture
         self.args = args
         self.started = False
         self.is_running = False
         self.finish = False
+        self.output_dumps_path = output_dumps_path
         self.started_bar = started_bar
         self.finished_bar = finished_bar
         self.create_command()
@@ -60,7 +61,7 @@ class CreateProcess():
                 init_command.append(f"{self.picture}")
             elif ar == "output_dir" : 
                 args_command.append(f"--{ar}")
-                args_command.append(f"{OUTPUT_VIDEO_DIR}")
+                args_command.append(f"{self.output_dumps_path}")
             elif ar in ["video", "quiet"]: 
                 pass
             else:
@@ -72,7 +73,7 @@ class CreateProcess():
                         args_command.append(f"--{ar}")
                         args_command.append(f"{value}")
         self.command = init_command + args_command + ["--quiet"]
-        self.dump_file = os.path.join(OUTPUT_VIDEO_DIR,f"last_run_dump_{Path(self.picture).name.split('.')[0]}.txt")
+        self.dump_file = os.path.join(self.output_dumps_path,f"last_run_dump_{Path(self.picture).name.split('.')[0]}.txt")
         if Path.exists(Path(self.dump_file)):
             os.remove(self.dump_file)
         #print(self.command)
@@ -97,6 +98,7 @@ class CreateProcess():
         return False
 
 def create_subprocess(args, tmp_dir, simultaneous_process = 18):
+    _rmdir(tmp_dir)
     frames_files = v2p(args.picture_file,tmp_dir)
     print(f"total process: {len(frames_files)}")
 
@@ -104,7 +106,10 @@ def create_subprocess(args, tmp_dir, simultaneous_process = 18):
     started_bar  = tqdm(total=n_process, position=0, desc="started  ", leave=True)
     finished_bar = tqdm(total=n_process, position=1, desc="finished ", leave=True)
     
-    process = [CreateProcess(p,args,started_bar,finished_bar) for p in frames_files]
+    output_dumps_path = f"video_dumps_{Path(args.picture_file).name.split(".")[0]}"
+    _rmdir(output_dumps_path)
+
+    process = [CreateProcess(p,args,output_dumps_path,started_bar,finished_bar) for p in frames_files]
 
     import time
     while True:
@@ -121,14 +126,22 @@ def create_subprocess(args, tmp_dir, simultaneous_process = 18):
             n_running_process = len([None for p in process if p.is_running])
             finished_process = [p.finished() for p in process]
         
-        n_running_process = len([None for p in process if p.is_running])
-        n_finished_process = len([None for p in process if p.finish])
-        n_started_process = len([None for p in process if p.started])
-        #print(f"N: {len(process)}, started: {n_started_process}, running: {n_running_process}, finished: {n_finished_process}")
+        # n_running_process = len([None for p in process if p.is_running])
+        # n_finished_process = len([None for p in process if p.finish])
+        # n_started_process = len([None for p in process if p.started])
+        # print(f"N: {len(process)}, started: {n_started_process}, running: {n_running_process}, finished: {n_finished_process}")
         
         time.sleep(0.8)
 
     started_bar.close()
     finished_bar.close()
+
+    _rmdir(tmp_dir)
+    
+    print(f"the results are stored in the directory: {output_dumps_path}")
+    print(f"to play it use:")
+    print(f" python internal/video_player.py {output_dumps_path}")
+    
+    return output_dumps_path
 
 

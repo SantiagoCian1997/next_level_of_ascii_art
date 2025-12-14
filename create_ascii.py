@@ -10,15 +10,15 @@ from pathlib import Path
 
 
 parser = argparse.ArgumentParser(description="ASCII art at next level ")
-parser.add_argument("picture_file",         help="the input image")                                          # positional argument
+parser.add_argument("picture_file",             help="the input image")                                          # positional argument
 parser.add_argument("-C",     "--calibration",  help="calibration file", default="calibrations/cal_default.pkl") # optional argument
 parser.add_argument("-c",     "--columns",      help="Column output number")                                     # optional argument
 parser.add_argument("-r",     "--rows",         help="Rows output number")                                       # optional argument
 parser.add_argument("-v",     "--verbose",      action="store_true",help="Enable verbose mode")                  # flag
 parser.add_argument("-q",     "--quality",      choices=["fast", "medium", "slow"], help="Quality of the interfering", default="medium")
 parser.add_argument("-video", "--video",        action="store_true",help="Video processing")                     # flag
-parser.add_argument("-od",     "--output_dir",         help="Specify output directory", default=".")                                       # optional argument
-parser.add_argument("-quiet",     "--quiet",         action="store_true",help="No printing process")                                       # flag
+parser.add_argument("-od",    "--output_dir",   help="Specify output directory", default=".")                                       # optional argument
+parser.add_argument("-quiet", "--quiet",        action="store_true",help="No printing process")                                       # flag
 args = parser.parse_args()
 
 size_terminal = os.get_terminal_size()
@@ -40,13 +40,13 @@ if not args.video:
     dump_path = os.path.join(args.output_dir,dump_file)
     cr.dump_to_file(dump_path)
 else :
-    from internal.video2picture import _rmdir, create_subprocess
+    from internal.video2picture import create_subprocess
     from internal.video_player import play_video
     tmp_dir = "tmp_video"
-    _rmdir(tmp_dir)
-    create_subprocess(args,tmp_dir,simultaneous_process=18)
-    while True:
-        play_video("video_dumps")
+    output_dir = create_subprocess(args,tmp_dir,simultaneous_process=18)
+
+    play_video(output_dir)
+
     
     
 

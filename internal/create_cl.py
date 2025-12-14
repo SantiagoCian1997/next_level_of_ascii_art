@@ -41,6 +41,8 @@ class Create:
                 final_px_t_x = int(px_t_y/aspect_input)                                    
 
         self.grid_size = [ int(final_px_t_x/self.grid_info.char_size_X) , int(final_px_t_y/self.grid_info.char_size_Y) ]
+        if self.grid_size[0] < 1: self.grid_size[0] = 1
+        if self.grid_size[1] < 1: self.grid_size[1] = 1
         self.final_px_terminal = [final_px_t_x , final_px_t_y]
         self.resized_image = self.image.resize( ( final_px_t_x,final_px_t_y  ))
 

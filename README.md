@@ -57,6 +57,23 @@ python create_ascii.py my_picture.jpg -q medium # medium quality (default)
 python create_ascii.py my_picture.jpg -q slow   # high quality   (slowest)
 ```
 
+## Video art:
+### Video support is already available!
+This feature is in beta but is working. 
+Here some usage examples (basically use the ```-video``` flag and use the faster quality):
+```bash
+python create_ascii.py my_video.mov -video -c 25 -q fast
+python create_ascii.py my_video.mp4 -video -r 10 -q fast
+python create_ascii.py my_video.mp4 -video -c 40 -q fast -C calibrations/cal_yellow_black_white.pkl 
+```
+
+All ```.txt``` dump files (one per frame) are stored in the ```video_dumps_<your_video_name>/``` directory.
+They will be overwritten if you start the inference process again.
+
+### How to watch your video
+After processing, the video will be played once in the terminal.
+To watch it again, use the ```internal/video_player.py``` script and pass the directory containing the dumped files as an argument.
+
 ## Calibration tool:
 ### Activate python virtual environment as sudo
 ```bash
@@ -110,14 +127,14 @@ sudo python run_calibration.py calibration_output_file.pkl -s 2 -c my_own_colors
 ## TODO list:
 ```
 - multi core processing             [WIP] (coming soon ^_^ )
-- Windows OS support                [WIP] (it's working now but not self set)
-- dump output to a file             [done] (now is dumped on last_run_dump_{picture_name})
+- Windows OS support                [DONE]
+- dump output to a file             [DONE] (now is dumped on last_run_dump_{picture_name})
 - C library for inference process   [hold]
 - make better CLI                   [hold]
 - add auto brightness-contrast tool [hold]
 - picture output render             [hold]
 - detect grid with better method    [hold]
-- video support                     [hold]
+- video support                     [DONE]
 - morphologic animation tool        [hold]
 ```
 ## Contact
