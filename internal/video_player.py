@@ -9,7 +9,7 @@ def clear_screen():
 def start_position():
     print("\033[H", end="")  # move cursor home + clear screen
 
-DELAY = 3*1/30  # seconds
+DELAY = 1/30  # seconds
 def play_video(path):
     files = sorted(Path(path).iterdir())
 
