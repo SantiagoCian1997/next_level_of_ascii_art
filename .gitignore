@@ -135,3 +135,12 @@ last_run_dump*
 dev_tools/
 *local_devs*
 local_devs/
+
+# video tool flag
+*video_dev*
+video_dev/
+*tmp_video*
+tmp_video/
+
+
+

@@ -10,13 +10,14 @@ import sys
 
 
 class Create:
-    def __init__(self, image, grid_size, quality_arg, calibration, verbose = True):
+    def __init__(self, image, grid_size, quality_arg, calibration, verbose = True, quiet = False):
         self.image = image
         self.original_grid_size = grid_size
         self.quality_arg = quality_arg
         self.char_data = calibration["character_data"]
         self.grid_info = calibration["grid_info"]
         self.verbose = verbose
+        self.quiet = quiet
 
         px_t_x = int(self.original_grid_size[0]*self.grid_info.char_size_X)
         px_t_y = int(self.original_grid_size[1]*self.grid_info.char_size_Y)
@@ -85,11 +86,11 @@ class Create:
             else : #slow
                 min_error_char = matcher.find(sub_image)
 
-            print(min_error_char, end='', flush=True)
+            if not self.quiet: print(min_error_char, end='', flush=True)
             self.str_out += min_error_char
             if cnt == self.grid_size[0]:
                 cnt = 0
-                print("\033[0m")
+                if not self.quiet: print("\033[0m")
                 self.str_out += "\033[0m\n"
                 
         if self.verbose:
