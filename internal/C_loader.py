@@ -8,14 +8,14 @@ from pathlib import Path
 
 
 HERE = Path(__file__).parent
-CSRC = HERE / ".." / "c_lib_dev" / "c_matcher.c"
+CSRC = HERE / "c_matcher.c"
 LIB_NAME = {
     "linux": "c_matcher.so",
     "darwin": "c_matcher.dylib",
     "win32": "c_matcher.dll",
 }[sys.platform]
 
-LIB_PATH = HERE / ".." / "c_lib_dev" / LIB_NAME
+LIB_PATH = HERE / LIB_NAME
 
 def needs_rebuild():
     if not LIB_PATH.exists():
@@ -28,7 +28,7 @@ def compile_c_code():
     print(f"output file: {LIB_NAME}")
 
     if sys.platform == "win32":
-        raise RuntimeError("Windows build not implemented")
+        raise RuntimeError("Windows build not implemented yet")
 
     cmd = [
         "gcc",
