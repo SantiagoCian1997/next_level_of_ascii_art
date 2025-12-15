@@ -73,7 +73,7 @@ class Create:
 
         start_time = time.time()
         self.str_out = ""
-        if not self.use_C_libs:
+        if not self.use_C_libs: # python infer
             matcher = Matcher(self.char_data)
             matcher.verify_char_size(self.grid_info, self.sub_images[0])
             cnt = 0
@@ -96,9 +96,11 @@ class Create:
                     if not self.quiet: print("\033[0m")
                     self.str_out += "\033[0m\n"
                     
-        else: # C libs 
+        else: # C libs infer
             # Load the shared library
-            c_matcher = ctypes.CDLL('./c_lib_dev/c_matcher.so')  # Use 'mylib.dll' on Windows
+            from internal.C_loader import load_c_matcher
+            c_matcher = load_c_matcher()
+
             # Define argument types for safety
             c_matcher.infer_and_match.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_int)]
             c_matcher.infer_and_match.restype = None
@@ -128,9 +130,10 @@ class Create:
             c_array_b = array_type_b(*picture_grid_b)
 
 
-            print("deubug: ")
-            print(f"picture_grid_r[0:5] : {[str(d) for d in picture_grid_r[0:5]]}")
-            print(f"c_array_r[0:5]      : {[str(d) for d in c_array_r[0:5]]}")
+            if self.verbose:
+                print("debug: ")
+                print(f"picture_grid_r[0:5] : {[str(d) for d in picture_grid_r[0:5]]}")
+                print(f"c_array_r[0:5]      : {[str(d) for d in c_array_r[0:5]]}")
             # data = bytearray([0x01, 0x02, 0xFF, 0x10, 0x20])
             # # Convert it to a ctypes array
             # array_type = ctypes.c_uint8 * len(data)
@@ -155,7 +158,6 @@ class Create:
 
             array_return_char_index = ctypes.c_int * int(self.grid_size[0]*self.grid_size[1])  # Create a ctypes array type
             return_char_index = array_return_char_index()                # Allocate the actual array
-            breakpoint()
             c_matcher.infer_and_match(    
                 self.grid_info.char_size_X, # char_x,         # int
                 self.grid_info.char_size_Y, # char_y,         # int
@@ -169,7 +171,19 @@ class Create:
                 c_char_pixel_info_array_b, # char_data_b,    # uint8_t*  
                 return_char_index # return_char_index,       #   int*
             )
-            print(f"returned: {[str(d) for d in return_char_index]}")
+            # print(f"returned: {[str(d) for d in return_char_index]}")
+            
+            cnt = 0
+            for y in range(self.grid_size[1]):
+                to_print = ""
+                for x in range(self.grid_size[0]):
+                    to_print += self.char_data[return_char_index[cnt]].char_value
+                    cnt += 1
+                to_print += "\033[0m"
+                self.str_out += to_print + "\n"
+                if not self.quiet: print(to_print)
+
+
 
             
         if self.verbose:

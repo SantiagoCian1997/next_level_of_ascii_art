@@ -62,7 +62,7 @@ class CreateProcess():
             elif ar == "output_dir" : 
                 args_command.append(f"--{ar}")
                 args_command.append(f"{self.output_dumps_path}")
-            elif ar in ["video", "quiet"]: 
+            elif ar in ["video", "quiet", "verbose"]: 
                 pass
             else:
                 if value != None:
@@ -137,7 +137,7 @@ def create_subprocess(args, tmp_dir, simultaneous_process = 18):
     finished_bar.close()
 
     _rmdir(tmp_dir)
-    
+
     print(f"the results are stored in the directory: {output_dumps_path}")
     print(f"to play it use:")
     print(f" python internal/video_player.py {output_dumps_path}")
