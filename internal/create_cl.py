@@ -6,7 +6,7 @@ import time
 import numpy as np
 import sys
 import ctypes
-from internal.C_loader import load_c_matcher, c_lib_is_supported
+from internal.C_loader import load_c_matcher, c_lib_is_supported, set_loader_verbose
 
 class Create:
     def __init__(self, image, grid_size, quality_arg, calibration, verbose = True, quiet = False):
@@ -100,6 +100,7 @@ class Create:
             if self.verbose and not self.quality_arg == "medium":
                 print(f"INFO: quality steps is not implemented in C lib")
 
+            set_loader_verbose(self.verbose)
             c_matcher = load_c_matcher()
             c_matcher.infer_and_match.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_int)]
             c_matcher.infer_and_match.restype = None

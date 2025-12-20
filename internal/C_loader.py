@@ -3,6 +3,7 @@
 import ctypes
 import subprocess
 import sys
+import shutil
 import os
 from pathlib import Path
 
@@ -18,24 +19,57 @@ LIB_NAME = {
 BUILD = HERE / "build"
 LIB_PATH = BUILD / LIB_NAME
 BUILD.mkdir(exist_ok=True)
+VERBOSE = False
 
 def needs_rebuild():
     if not LIB_PATH.exists():
         return True
     return CSRC.stat().st_mtime > LIB_PATH.stat().st_mtime
 
-def compile_c_code():
-    print(f"Compiling C library for: {sys.platform}")
-    print(f"output file: {LIB_NAME}")
 
-    if sys.platform == "win32":
-        raise RuntimeError("Windows build not implemented yet")
+PLATFORM_CONFIG = {
+    "linux": {
+        "lib": "c_matcher.so",
+        "compiler": "gcc",
+        "cflags": ["-O3", "-shared", "-fPIC"],
+    },
+    "darwin": {
+        "lib": "c_matcher.dylib",
+        "compiler": "clang",
+        "cflags": ["-O3", "-shared", "-fPIC"],
+    },
+    "win32": {
+        "lib": "c_matcher.dll",
+        "compiler": "gcc",  # MinGW / MSYS2
+        "cflags": ["-O3", "-shared"],
+    },
+}
+
+def set_loader_verbose(verbose = False):
+    global VERBOSE
+    VERBOSE = verbose
+
+def get_platform_config():
+    try:
+        return PLATFORM_CONFIG[sys.platform]
+    except KeyError:
+        raise RuntimeError(f"Unsupported platform: {sys.platform}")
+
+def compile_c_code():
+    cfg = get_platform_config()
+
+    compiler = shutil.which(cfg["compiler"])
+    if compiler is None:
+        raise RuntimeError(f"Compiler '{cfg['compiler']}' not found in PATH")
+
+    if VERBOSE:
+        print(f"Compiling C library for: {sys.platform}")
+        print(f"Compiler: {compiler}")
+        print(f"Output: {LIB_PATH}")
 
     cmd = [
-        "gcc",
-        "-O3",
-        "-shared",
-        "-fPIC",
+        compiler,
+        *cfg["cflags"],
         str(CSRC),
         "-o",
         str(LIB_PATH),
