@@ -33,7 +33,7 @@ with open(args.calibration, 'rb') as file:
 
 if not args.video:
     image_input = Image.open(args.picture_file)
-    cr = Create(image_input, grid_size, args.quality, calibration, args.verbose, args.quiet, args.low_libs)
+    cr = Create(image_input, grid_size, args.quality, calibration, args.verbose, args.quiet)
     cr.start_infer()
     _name = Path(args.picture_file).name.split(".")[0]
     dump_file = f"last_run_dump_{_name}.txt"
@@ -44,7 +44,7 @@ else :
     from internal.video2picture import create_subprocess
     from internal.video_player import play_video
     tmp_dir = "tmp_video"
-    output_dir = create_subprocess(args,tmp_dir,simultaneous_process=16)
+    output_dir = create_subprocess(args,tmp_dir,simultaneous_process=4)
 
     play_video(output_dir)
 

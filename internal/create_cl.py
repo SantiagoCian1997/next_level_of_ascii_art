@@ -6,10 +6,10 @@ import time
 import numpy as np
 import sys
 import ctypes
-
+from internal.C_loader import load_c_matcher, c_lib_is_supported
 
 class Create:
-    def __init__(self, image, grid_size, quality_arg, calibration, verbose = True, quiet = False, use_C_libs = False):
+    def __init__(self, image, grid_size, quality_arg, calibration, verbose = True, quiet = False):
         self.image = image
         self.original_grid_size = grid_size
         self.quality_arg = quality_arg
@@ -17,7 +17,6 @@ class Create:
         self.grid_info = calibration["grid_info"]
         self.verbose = verbose
         self.quiet = quiet
-        self.use_C_libs = use_C_libs
 
         px_t_x = int(self.original_grid_size[0]*self.grid_info.char_size_X)
         px_t_y = int(self.original_grid_size[1]*self.grid_info.char_size_Y)
@@ -67,13 +66,14 @@ class Create:
     def start_infer(self):
         if self.verbose:
             print(f"Starting infer process... could take a while.")
-            print(f"You can try with quality flag (-q)")
-            print(f"Multi core function come soon :) ")
+            if not c_lib_is_supported():
+                print(f"   C library is not supported on this machine. Will infer with python ")
+                print(f"   You can try with quality flag (-q)")
             print()
-
+        
         start_time = time.time()
         self.str_out = ""
-        if not self.use_C_libs: # python infer
+        if not c_lib_is_supported(): # python infer
             matcher = Matcher(self.char_data)
             matcher.verify_char_size(self.grid_info, self.sub_images[0])
             cnt = 0
@@ -97,25 +97,14 @@ class Create:
                     self.str_out += "\033[0m\n"
                     
         else: # C libs infer
-            # Load the shared library
-            from internal.C_loader import load_c_matcher
-            c_matcher = load_c_matcher()
+            if self.verbose and not self.quality_arg == "medium":
+                print(f"INFO: quality steps is not implemented in C lib")
 
-            # Define argument types for safety
+            c_matcher = load_c_matcher()
             c_matcher.infer_and_match.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_int)]
             c_matcher.infer_and_match.restype = None
 
-            
-
-
-            # Create a byte array in Python
             ttt = [pixel for img in self.sub_images for col in np.array(img).astype(np.int16) for pixel in col]
-            #aux = 
-            #np.array(self.sub_images[1]).astype(np.int16)
-            # final_vector = [cell.info for column in main_matrix for cell in column]
-            # picture_grid_r = bytearray([np.array(img).astype(np.int16) for img in self.sub_images])
-            # picture_grid_g = bytearray([np.array(img).astype(np.int16) for img in self.sub_images])
-            # picture_grid_b = bytearray([np.array(img).astype(np.int16) for img in self.sub_images])
 
             picture_grid_r = bytearray([pixel[0] for pixel in ttt])
             picture_grid_g = bytearray([pixel[1] for pixel in ttt])
@@ -128,19 +117,7 @@ class Create:
             c_array_r = array_type_r(*picture_grid_r)
             c_array_g = array_type_g(*picture_grid_g)
             c_array_b = array_type_b(*picture_grid_b)
-
-
-            if self.verbose:
-                print("debug: ")
-                print(f"picture_grid_r[0:5] : {[str(d) for d in picture_grid_r[0:5]]}")
-                print(f"c_array_r[0:5]      : {[str(d) for d in c_array_r[0:5]]}")
-            # data = bytearray([0x01, 0x02, 0xFF, 0x10, 0x20])
-            # # Convert it to a ctypes array
-            # array_type = ctypes.c_uint8 * len(data)
-            # c_array = array_type(*data)
-            # # Call the function
-            #c_matcher.infer_and_match(c_array, len(data))
-             
+            
             ccc = [pixel for img in self.char_data for col in img.info_pixel_np for pixel in col]
 
             char_grid_r = bytearray([pixel[0] for pixel in ccc])
@@ -154,7 +131,6 @@ class Create:
             c_char_pixel_info_array_r = array_char_r(*char_grid_r)
             c_char_pixel_info_array_g = array_char_g(*char_grid_g)
             c_char_pixel_info_array_b = array_char_b(*char_grid_b)
-
 
             array_return_char_index = ctypes.c_int * int(self.grid_size[0]*self.grid_size[1])  # Create a ctypes array type
             return_char_index = array_return_char_index()                # Allocate the actual array
@@ -182,9 +158,6 @@ class Create:
                 to_print += "\033[0m"
                 self.str_out += to_print + "\n"
                 if not self.quiet: print(to_print)
-
-
-
             
         if self.verbose:
             print(f"\033[0m--- final time : {time.time() - start_time} ---")

@@ -15,12 +15,13 @@ LIB_NAME = {
     "win32": "c_matcher.dll",
 }[sys.platform]
 
-LIB_PATH = HERE / LIB_NAME
+BUILD = HERE / "build"
+LIB_PATH = BUILD / LIB_NAME
+BUILD.mkdir(exist_ok=True)
 
 def needs_rebuild():
     if not LIB_PATH.exists():
         return True
-
     return CSRC.stat().st_mtime > LIB_PATH.stat().st_mtime
 
 def compile_c_code():
@@ -45,5 +46,12 @@ def compile_c_code():
 def load_c_matcher():
     if not LIB_PATH.exists() or needs_rebuild():
         compile_c_code()
-
     return ctypes.CDLL(str(LIB_PATH))
+
+def c_lib_is_supported():
+    p = sys.platform
+    if p == "linux":
+        return True
+        return False
+    return False
+
