@@ -50,10 +50,7 @@ def set_loader_verbose(verbose = False):
     VERBOSE = verbose
 
 def get_platform_config():
-    try:
-        return PLATFORM_CONFIG[sys.platform]
-    except KeyError:
-        raise RuntimeError(f"Unsupported platform: {sys.platform}")
+    return PLATFORM_CONFIG[sys.platform]
 
 def compile_c_code():
     cfg = get_platform_config()
@@ -83,9 +80,5 @@ def load_c_matcher():
     return ctypes.CDLL(str(LIB_PATH))
 
 def c_lib_is_supported():
-    p = sys.platform
-    if p == "linux":
-        return True
-        return False
-    return False
+    return sys.platform in PLATFORM_CONFIG.keys()
 
