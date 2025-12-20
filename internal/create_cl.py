@@ -64,6 +64,7 @@ class Create:
             print()
 
     def start_infer(self):
+        set_loader_verbose(self.verbose)
         if self.verbose:
             print(f"Starting infer process... could take a while.")
             if not c_lib_is_supported():
@@ -100,7 +101,6 @@ class Create:
             if self.verbose and not self.quality_arg == "medium":
                 print(f"INFO: quality steps is not implemented in C lib")
 
-            set_loader_verbose(self.verbose)
             c_matcher = load_c_matcher()
             c_matcher.infer_and_match.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_int)]
             c_matcher.infer_and_match.restype = None
