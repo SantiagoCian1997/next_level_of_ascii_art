@@ -26,6 +26,9 @@ def needs_rebuild():
         return True
     return CSRC.stat().st_mtime > LIB_PATH.stat().st_mtime
 
+def _print(v):
+    if VERBOSE: 
+        print(v)
 
 PLATFORM_CONFIG = {
     "linux": {
@@ -49,20 +52,18 @@ def set_loader_verbose(verbose = False):
     global VERBOSE
     VERBOSE = verbose
 
-def get_platform_config():
-    return PLATFORM_CONFIG[sys.platform]
+def compiler_found():
+    compiler = shutil.which(PLATFORM_CONFIG[sys.platform]["compiler"])
+    return not compiler is None
 
 def compile_c_code():
-    cfg = get_platform_config()
-
+    cfg = PLATFORM_CONFIG[sys.platform]
     compiler = shutil.which(cfg["compiler"])
-    if compiler is None:
-        raise RuntimeError(f"Compiler '{cfg['compiler']}' not found in PATH")
 
-    if VERBOSE:
-        print(f"Compiling C library for: {sys.platform}")
-        print(f"Compiler: {compiler}")
-        print(f"Output: {LIB_PATH}")
+    
+    _print(f"Compiling C library for: {sys.platform}")
+    _print(f"Compiler: {compiler}")
+    _print(f"Output: {LIB_PATH}")
 
     cmd = [
         compiler,
@@ -79,6 +80,14 @@ def load_c_matcher():
         compile_c_code()
     return ctypes.CDLL(str(LIB_PATH))
 
-def c_lib_is_supported():
+def valid_OS():
     return sys.platform in PLATFORM_CONFIG.keys()
 
+def c_lib_is_supported():
+    if not valid_OS():
+        _print("OS not valid for C lib")
+        return False
+    if not compiler_found():
+        _print(f"compiler not found {PLATFORM_CONFIG[sys.platform]['compiler']}")
+        return False
+    return True
