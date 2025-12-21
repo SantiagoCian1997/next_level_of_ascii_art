@@ -7,6 +7,7 @@ import numpy as np
 from PIL import Image, ImageTk,ImageDraw
 from colorama import Fore,Back
 from internal.character_data_cl import CharacterData
+import ctypes
 
 class Cal:
     def __init__(self,args,color_dict):
@@ -85,10 +86,14 @@ class Cal:
         # self.show_one_character_data(self.character_data[int((len(self.character_data)-1)/2)])
         # self.show_one_character_data(self.character_data[len(self.character_data)-1])
         print()
-        return {"character_data": self.character_data, "grid_info": self.grid_info}
+        ccc = [pixel for img in self.character_data  for col in img.info_pixel_np              for pixel in col]
+        char_grid_r = bytearray([pixel[0] for pixel in ccc])
+        char_grid_g = bytearray([pixel[1] for pixel in ccc])
+        char_grid_b = bytearray([pixel[2] for pixel in ccc])
+        return {"character_data": self.character_data, "grid_info": self.grid_info, "c_type_decompose": [char_grid_r,char_grid_g,char_grid_b]}
 
     def show_one_character_data(self,character_data):
-        print(f"caracter:{character_data.char_value}{self.r_c()}")
+        print(f"character:{character_data.char_value}{self.r_c()}")
         image = Image.fromarray(character_data.info_pixel_np_raw)
         image.show()
         input("continue")

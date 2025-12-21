@@ -15,8 +15,10 @@ class Create:
         self.quality_arg = quality_arg
         self.char_data = calibration["character_data"]
         self.grid_info = calibration["grid_info"]
+        self.C_type_decompose_char_data = calibration["c_type_decompose"]
         self.verbose = verbose
         self.quiet = quiet
+        self.start_time = time.time()
 
         px_t_x = int(self.original_grid_size[0]*self.grid_info.char_size_X)
         px_t_y = int(self.original_grid_size[1]*self.grid_info.char_size_Y)
@@ -45,6 +47,7 @@ class Create:
         self.final_px_terminal = [final_px_t_x , final_px_t_y]
         self.resized_image = self.image.resize( ( final_px_t_x,final_px_t_y  ))
 
+        self.start_slicing_time = time.time()
         self.sub_images = []
         for row in range(self.grid_size[1]):
             for col in range(self.grid_size[0]):
@@ -64,6 +67,8 @@ class Create:
             print()
 
     def start_infer(self):
+        self.start_infer_time = time.time()
+        self.start_loader_time = None
         set_loader_verbose(self.verbose)
         if self.verbose:
             print(f"Starting infer process... could take a while.")
@@ -72,12 +77,13 @@ class Create:
                 print(f"   You can try with quality flag (-q)")
             print()
         
-        start_time = time.time()
+        
         self.str_out = ""
         if not c_lib_is_supported(): # python infer
             matcher = Matcher(self.char_data)
             matcher.verify_char_size(self.grid_info, self.sub_images[0])
             cnt = 0
+            self.start_infer_iteration_time = time.time()
             for i, sub_image in enumerate(self.sub_images):
                 cnt += 1
                 if self.quality_arg == "fast":
@@ -101,40 +107,45 @@ class Create:
             if self.verbose and not self.quality_arg == "medium":
                 print(f"INFO: quality steps is not implemented in C lib")
 
+            self.start_loader_time = time.time()
             c_matcher = load_c_matcher()
             c_matcher.infer_and_match.argtypes = [ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_uint8), ctypes.POINTER(ctypes.c_int)]
             c_matcher.infer_and_match.restype = None
 
+            self.start_convert_array_time = time.time()
             ttt = [pixel for img in self.sub_images for col in np.array(img).astype(np.int16) for pixel in col]
 
+            self.start_convert_array_time_2 = time.time()
+            # ccc = [pixel for img in self.char_data  for col in img.info_pixel_np              for pixel in col]
+            # char_grid_r = bytearray([pixel[0] for pixel in ccc])
+            # char_grid_g = bytearray([pixel[1] for pixel in ccc])
+            # char_grid_b = bytearray([pixel[2] for pixel in ccc])
+            array_char_r = ctypes.c_uint8 * len(self.C_type_decompose_char_data[0])
+            array_char_g = ctypes.c_uint8 * len(self.C_type_decompose_char_data[1])
+            array_char_b = ctypes.c_uint8 * len(self.C_type_decompose_char_data[2])
+            c_char_pixel_info_array_r = array_char_r(*self.C_type_decompose_char_data[0])
+            c_char_pixel_info_array_g = array_char_g(*self.C_type_decompose_char_data[1])
+            c_char_pixel_info_array_b = array_char_b(*self.C_type_decompose_char_data[2])
+            
+            
+            self.start_decompose_pixels = time.time()
             picture_grid_r = bytearray([pixel[0] for pixel in ttt])
             picture_grid_g = bytearray([pixel[1] for pixel in ttt])
             picture_grid_b = bytearray([pixel[2] for pixel in ttt])
-            
+
+            self.start_creating_c_types = time.time()
             array_type_r = ctypes.c_uint8 * len(picture_grid_r)
             array_type_g = ctypes.c_uint8 * len(picture_grid_g)
             array_type_b = ctypes.c_uint8 * len(picture_grid_b)
+            array_return_char_index = ctypes.c_int * int(self.grid_size[0]*self.grid_size[1])  # Create a ctypes array type
 
+            self.start_load_arrays = time.time()
             c_array_r = array_type_r(*picture_grid_r)
             c_array_g = array_type_g(*picture_grid_g)
             c_array_b = array_type_b(*picture_grid_b)
-            
-            ccc = [pixel for img in self.char_data for col in img.info_pixel_np for pixel in col]
-
-            char_grid_r = bytearray([pixel[0] for pixel in ccc])
-            char_grid_g = bytearray([pixel[1] for pixel in ccc])
-            char_grid_b = bytearray([pixel[2] for pixel in ccc])
-            
-            array_char_r = ctypes.c_uint8 * len(char_grid_r)
-            array_char_g = ctypes.c_uint8 * len(char_grid_g)
-            array_char_b = ctypes.c_uint8 * len(char_grid_b)
-
-            c_char_pixel_info_array_r = array_char_r(*char_grid_r)
-            c_char_pixel_info_array_g = array_char_g(*char_grid_g)
-            c_char_pixel_info_array_b = array_char_b(*char_grid_b)
-
-            array_return_char_index = ctypes.c_int * int(self.grid_size[0]*self.grid_size[1])  # Create a ctypes array type
             return_char_index = array_return_char_index()                # Allocate the actual array
+
+            self.start_infer_iteration_time = time.time()
             c_matcher.infer_and_match(    
                 self.grid_info.char_size_X, # char_x,         # int
                 self.grid_info.char_size_Y, # char_y,         # int
@@ -160,8 +171,40 @@ class Create:
                 self.str_out += to_print + "\n"
                 if not self.quiet: print(to_print)
             
+        self.end_time = time.time()
+
         if self.verbose:
-            print(f"\033[0m--- final time : {time.time() - start_time} ---")
+
+
+
+             #  self.start_time
+             #  self.start_slicing_time
+             #  self.start_infer_time
+             #  self.start_loader_time # optional
+             #  self.start_convert_array_time # optional
+             #  self.start_convert_array_time_2 = time.time()
+
+             #  self.start_decompose_pixels # optional
+             #  self.start_creating_c_types # optional
+             #  self.start_load_arrays # optional
+             #  self.start_infer_iteration_time # optional
+             #  self.end_time
+
+            print(    f"\033[0m--- start     to slicing   time : {-(self.start_time                 - self.start_slicing_time         )} ---")
+            print(    f"\033[0m--- slicing   to infer     time : {-(self.start_slicing_time         - self.start_infer_time           )} ---")
+            if self.start_loader_time:
+                print(f"\033[0m--- infer     to loader    time : {-(self.start_infer_time           - self.start_loader_time          )} ---")
+                print(f"\033[0m--- loader    to convert   time : {-(self.start_loader_time          - self.start_convert_array_time   )} ---")
+                print(f"\033[0m--- convert   to convert 2 time : {-(self.start_convert_array_time   - self.start_convert_array_time_2 )} ---")
+                print(f"\033[0m--- convert 2 to decompose time : {-(self.start_convert_array_time_2 - self.start_decompose_pixels     )} ---")
+                print(f"\033[0m--- decompose to c types   time : {-(self.start_decompose_pixels     - self.start_creating_c_types     )} ---")
+                print(f"\033[0m--- c types   to load arr  time : {-(self.start_creating_c_types     - self.start_load_arrays          )} ---")
+                print(f"\033[0m--- load arr  to iteration time : {-(self.start_load_arrays          - self.start_infer_iteration_time )} ---")
+                print(f"\033[0m--- iteration to end       time : {-(self.start_infer_iteration_time - self.end_time                   )} ---")
+            else :
+                print(f"\033[0m--- infer     to end       time : {-(self.start_infer_time           - self.end_time                   )} ---")
+            print(    f"\033[0m--- TOTAL TIME : {                 -(self.start_time                 - self.end_time                   )} ---")
+
 
     def dump_to_file(self,filename):
         with open(filename, "w", encoding='utf-8') as file:
