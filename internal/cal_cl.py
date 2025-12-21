@@ -4,7 +4,6 @@ import time
 from mss import mss
 import platform
 import numpy as np
-from PIL import Image, ImageTk,ImageDraw
 from colorama import Fore,Back
 from internal.character_data_cl import CharacterData
 import ctypes
@@ -27,6 +26,7 @@ class Cal:
         return f"{Fore.RESET}{Back.RESET}"
     
     def take_secreen_shot(self):
+        from PIL import Image
         time.sleep(0.5)
         with mss() as sct:
             sct_img = sct.grab(sct.monitors[self.screen_indx])
@@ -40,6 +40,7 @@ class Cal:
 
     
     def print_next_page_and_capture(self):
+        from PIL import Image
         bins_Y = self.grid_info.bins_Y - 2
         bins_X = self.grid_info.bins_X - 2
         self.print_margins()
@@ -93,6 +94,7 @@ class Cal:
         return {"character_data": self.character_data, "grid_info": self.grid_info, "c_type_decompose": [char_grid_r,char_grid_g,char_grid_b]}
 
     def show_one_character_data(self,character_data):
+        from PIL import Image
         print(f"character:{character_data.char_value}{self.r_c()}")
         image = Image.fromarray(character_data.info_pixel_np_raw)
         image.show()
